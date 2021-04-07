@@ -30,6 +30,9 @@ def main_wrapper():
     pages = paginator.paginate(EventBusName='default')
     for page in pages:
         for rule in page["Rules"]:
+            if "ScheduleExpression" not in rule:
+                # Skip for event pattern rules
+                continue
             main(rule["Arn"], scheduled=True)
 
 
@@ -58,6 +61,11 @@ def main(arn, scheduled=False):
         Name=name,
         EventBusName='default'
     )
+
+    # Skip for event pattern rules
+    if "ScheduleExpression" not in response:
+        logger.info("Rule does not have a schedule expression so will be ignored.")
+        return
 
     expression = response["ScheduleExpression"]
     description = response["Description"]
