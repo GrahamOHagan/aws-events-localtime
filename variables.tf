@@ -8,10 +8,6 @@ variable "winter_expression" {
   default = "cron(0 2 ? 10 1L *)"
 }
 
-variable "location" {
-  default = ""
-}
-
 variable "trigger_tag" {
   description = "The name of the tag key to trigger the lambda to convert the cron expression."
   default = "LocalTime"
