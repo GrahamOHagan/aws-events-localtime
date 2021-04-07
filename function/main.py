@@ -12,16 +12,28 @@ TOGGLE = os.environ.get("TOGGLE", "LocalTime")
 
 
 def lambda_handler(event=None, Contect=None):
-    main(event["detail"])
-
-
-def main(event):
-    # Find arn of resource from EventBridge event
-    if event["eventName"] == "PutRule":
-        arn = event["responseElements"]["ruleArn"]
+    if event["detail-type"] == "Scheduled Event":
+        # Scheduled
+        logger.info("Searching for all rules in account.")
+        main_wrapper()
     else:
-        arn = event["requestParameters"]["resourceARN"]
+        # Newly created or updated rule.
+        if event["detail"]["eventName"] == "PutRule":
+            main(event["detail"]["responseElements"]["ruleArn"])
+        else:
+            main(event["detail"]["requestParameters"]["resourceARN"])
 
+
+def main_wrapper():
+    # List all rules in account
+    paginator = events.get_paginator('list_rules')
+    pages = paginator.paginate(EventBusName='default')
+    for page in pages:
+        for rule in page["Rules"]:
+            main(rule["Arn"], scheduled=True)
+
+
+def main(arn, scheduled=False):
     # Skip if resource does not have a tag with TOGGLE key
     response = events.list_tags_for_resource(ResourceARN=arn)
     timezone = [tag["Value"] for tag in response["Tags"] if tag["Key"] == TOGGLE]
@@ -54,7 +66,7 @@ def main(event):
     logger.info(f"Rule Cron Expression: {expression}")
 
     # Calculate new expression
-    new_expression = calculate_expression(timezone, expression)
+    new_expression = calculate_expression(timezone, expression, scheduled=scheduled)
 
     if expression != new_expression:
         """
@@ -81,7 +93,7 @@ def main(event):
     logger.info(f"Current expression: {expression}")
 
 
-def calculate_expression(tz, exp):
+def calculate_expression(tz, exp, scheduled=False):
     """Workout new Cron expression based on timezone."""
     utc = pytz.timezone('UTC')
     now = utc.localize(datetime.datetime.utcnow())
@@ -94,24 +106,32 @@ def calculate_expression(tz, exp):
         return " ".join(split_exp)
     else:
         logger.info("Daylight savings not in effect.")
+        if scheduled:
+            # Scheduled event when DST not in effect should increment an hour
+            split_exp = exp.split(" ")
+            split_exp[1] = format_hour(split_exp[1], subtract=False)
+            return " ".join(split_exp)
+        # Otherwise expression should remain as per Terraform
         return exp
 
 
-def format_hour(string):
+def format_hour(string, subtract=True):
     """Format the hour component of the expression."""
     if "," in string:
         # Comma separated values
         hours = string.split(",")
-        hours = [subtract_hour(h) for h in hours]
+        hours = [subtract_hour(h) if subtract else add_hour(h) for h in hours]
         return ",".join(hours)
     elif "-" in string:
         # Range of values
         hours = string.split("-")
-        hours = [subtract_hour(h) for h in hours]
+        hours = [subtract_hour(h) if subtract else add_hour(h) for h in hours]
         return "-".join(hours)
     else:
         # Single value
-        return subtract_hour(string)
+        if subtract:
+            return subtract_hour(string)
+        return add_hour(string)
 
 
 def subtract_hour(string):
@@ -120,3 +140,11 @@ def subtract_hour(string):
         return "23"
     hour = int(string)
     return str(hour - 1)
+
+
+def add_hour(string):
+    """Adds an hour from the string - 24 hour format."""
+    if string == "23":
+        return "0"
+    hour = int(string)
+    return str(hour + 1)
