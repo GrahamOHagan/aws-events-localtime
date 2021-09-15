@@ -11,13 +11,17 @@ logger.setLevel(logging.INFO)
 TOGGLE = os.environ.get("TOGGLE", "LocalTime")
 
 
-def lambda_handler(event=None, Contect=None):
+def lambda_handler(event=None, context=None):
     if event["detail-type"] == "Scheduled Event":
         # Scheduled
         logger.info("Searching for all rules in account.")
         main_wrapper()
     else:
         # Newly created or updated rule.
+        user = event["detail"]["userIdentity"]["arn"]
+        if f"{context.function_name}-role" in user:
+            logger.info("Triggered by self - Ignoring event.")
+            return
         if event["detail"]["eventName"] == "PutRule":
             main(event["detail"]["responseElements"]["ruleArn"])
         else:
@@ -68,7 +72,7 @@ def main(arn, scheduled=False):
         return
 
     expression = response["ScheduleExpression"]
-    description = response["Description"]
+    description = response.get("Description", "")
     role_arn = response.get("RoleArn", None)
 
     logger.info(f"Rule Cron Expression: {expression}")

@@ -18,6 +18,11 @@ variable "custom_lambda_name" {
   default = ""
 }
 
+variable "cloudwatch_log_retention_days" {
+  description = "Retention in days for cloudwatch logs."
+  default = 14
+}
+
 variable "tags" {
   type = map(string)
   default = {}

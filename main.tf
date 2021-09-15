@@ -19,6 +19,12 @@ resource "aws_lambda_function" "this" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/aws/lambda/${local.lambda_name}"
+  retention_in_days = var.cloudwatch_log_retention_days
+
+  tags = var.tags
+}
 
 # Lambda Role
 resource "aws_iam_role" "this" {
