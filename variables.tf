@@ -23,6 +23,11 @@ variable "cloudwatch_log_retention_days" {
   default = 14
 }
 
+variable "disable_put_events" {
+  description = "Toggle to disable triggering the lambda for PutRule & Tag events throughout the year."
+  default = false
+}
+
 variable "tags" {
   type = map(string)
   default = {}

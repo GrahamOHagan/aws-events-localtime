@@ -13,6 +13,7 @@ resource "aws_lambda_function" "this" {
   environment {
     variables = {
       TOGGLE = var.trigger_tag
+      DISABLE_PUT = var.disable_put_events
     }
   }
 
@@ -70,6 +71,7 @@ resource "aws_cloudwatch_event_target" "winter" {
 
 # Eventbridge pattern rule - When a rule is updated
 resource "aws_cloudwatch_event_rule" "this" {
+  count = var.disable_put_events ? 0 : 1
   name = "rule-creation-event"
   description = "Trigger localtime lambda when a rule is created or updated and has the ${var.trigger_tag} tag."
   event_pattern = <<EOF
@@ -99,7 +101,8 @@ EOF
   tags = var.tags
 }
 resource "aws_cloudwatch_event_target" "this" {
-  rule      = aws_cloudwatch_event_rule.this.name
+  count = var.disable_put_events ? 0 : 1
+  rule      = aws_cloudwatch_event_rule.this[0].name
   target_id = "SendToLambda"
   arn       = aws_lambda_function.this.arn
 }
@@ -122,9 +125,10 @@ resource "aws_lambda_permission" "allow_winter_trigger" {
 }
 
 resource "aws_lambda_permission" "allow_event_trigger" {
+  count = var.disable_put_events ? 0 : 1
   statement_id  = "AllowExecutionFromCWEvent"
   action        = "lambda:InvokeFunction"
   principal     = "events.amazonaws.com"
   function_name = aws_lambda_function.this.arn
-  source_arn    = aws_cloudwatch_event_rule.this.arn
+  source_arn    = aws_cloudwatch_event_rule.this[0].arn
 }

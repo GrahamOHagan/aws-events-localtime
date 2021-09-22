@@ -9,6 +9,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 TOGGLE = os.environ.get("TOGGLE", "LocalTime")
+DISABLE_PUT = os.environ.get("DISABLE_PUT", "false")
 
 
 def lambda_handler(event=None, context=None):
@@ -17,6 +18,8 @@ def lambda_handler(event=None, context=None):
         logger.info("Searching for all rules in account.")
         main_wrapper()
     else:
+        if DISABLE_PUT == "true":
+            return
         # Newly created or updated rule.
         user = event["detail"]["userIdentity"]["arn"]
         if f"{context.function_name}-role" in user:
