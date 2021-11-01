@@ -132,7 +132,10 @@ def calculate_expression(tz, exp, scheduled=False):
 
 def format_hour(string, subtract=True):
     """Format the hour component of the expression."""
-    if "," in string:
+    if "*" in string or "/" in string:
+        # Asterisk or forward slash wildcards
+        return string
+    elif "," in string:
         # Comma separated values
         hours = string.split(",")
         hours = [subtract_hour(h) if subtract else add_hour(h) for h in hours]
