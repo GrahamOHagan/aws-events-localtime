@@ -8,12 +8,15 @@ For example, a rule is deployed with the expression `cron(0 12 * * ? *)` and the
 
 The service is a lambda triggered by events matching events:PutRule API events - so Cloudtrail logging must be enabled. Additionally, twice a year the lambda is triggered and searches for all rules in the AWS account adjusting any expressions it finds.
 
-| Variable           | Description                                 | Default               |
-| ------------------ |:-------------------------------------------:| ---------------------:|
-| summer_expression  | When in summer to trigger the lambda        | `cron(0 1 ? 3 1L *)`  |
-| winter_expression  | When in winter to trigger the lambda        | `cron(0 2 ? 10 1L *)` |
-| trigger_tag        | Name of the tag to trigger the lambda       | `LocalTime`           |
-| custom_lambda_name | Custom name for the lambda                  | `localtime-events`    |
-| tags               | Tags for the lambda and dependant resources | `NA`                  |
+| Variable                      | Description                                 | Default               |
+| ----------------------------- |:-------------------------------------------:| ---------------------:|
+| summer_expression             | When in summer to trigger the lambda        | `cron(0 1 ? 3 1L *)`  |
+| winter_expression             | When in winter to trigger the lambda        | `cron(0 1 ? 10 1L *)` |
+| trigger_tag                   | Name of the tag to trigger the lambda       | `LocalTime`           |
+| custom_lambda_name            | Custom name for the lambda                  | `localtime-events`    |
+| alarm_email_endpoint          | Toggles Alarm and email notification        | `NA`                  |
+| cloudwatch_log_retention_days | Specify cloudwatch log retention in days    | `14`                  |
+| disable_put_events            | Disable triggering by PutRule & Tag events  | `false`               |
+| tags                          | Tags for the lambda and dependant resources | `NA`                  |
 
 AWS Rules follow UTC and schedule expression format is detailed [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).

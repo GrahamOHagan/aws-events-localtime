@@ -4,8 +4,8 @@ variable "summer_expression" {
 }
 
 variable "winter_expression" {
-  description = "The cron expression of when to trigger lambda in the winter. Default is last Sunday of October at 02:00 UTC."
-  default = "cron(0 2 ? 10 1L *)"
+  description = "The cron expression of when to trigger lambda in the winter. Default is last Sunday of October at 01:00 UTC."
+  default = "cron(0 1 ? 10 1L *)"
 }
 
 variable "trigger_tag" {
@@ -26,6 +26,11 @@ variable "cloudwatch_log_retention_days" {
 variable "disable_put_events" {
   description = "Toggle to disable triggering the lambda for PutRule & Tag events throughout the year."
   default = false
+}
+
+variable "alarm_email_endpoint" {
+  description = "Toggle Cloudwatch alarm and SNS topic email endpoint subscription."
+  default = ""
 }
 
 variable "tags" {

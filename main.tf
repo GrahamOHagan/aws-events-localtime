@@ -20,6 +20,12 @@ resource "aws_lambda_function" "this" {
   tags = var.tags
 }
 
+resource "aws_lambda_function_event_invoke_config" "this" {
+  # No retries as it can update the same rule multiple times
+  function_name          = aws_lambda_function.this.arn
+  maximum_retry_attempts = 0
+}
+
 resource "aws_cloudwatch_log_group" "this" {
   name              = "/aws/lambda/${local.lambda_name}"
   retention_in_days = var.cloudwatch_log_retention_days
@@ -131,4 +137,42 @@ resource "aws_lambda_permission" "allow_event_trigger" {
   principal     = "events.amazonaws.com"
   function_name = aws_lambda_function.this.arn
   source_arn    = aws_cloudwatch_event_rule.this[0].arn
+}
+
+resource "aws_cloudwatch_metric_alarm" "error_alarm" {
+  count               = var.alarm_email_endpoint != "" ? 1 : 0
+  alarm_name          = "${local.lambda_name}-Error-Alarm"
+  alarm_description   = "Triggers when the error count is > 1 for ${local.lambda_name}."
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 60
+  threshold           = 1
+  treat_missing_data  = "missing"
+
+  statistic = "Maximum"
+
+  dimensions = {
+    FunctionName = local.lambda_name
+  }
+
+  alarm_actions = [aws_sns_topic.lambda_alarm_notification[0].arn]
+  tags          = var.tags
+}
+
+
+resource "aws_sns_topic" "lambda_alarm_notification" {
+  count = var.alarm_email_endpoint != "" ? 1 : 0
+  name  = "${local.lambda_name}-Error-Alarm"
+
+  tags  = var.tags
+}
+
+resource "aws_sns_topic_subscription" "email_subscription" {
+  count = var.alarm_email_endpoint != "" ? 1 : 0
+
+  topic_arn = aws_sns_topic.lambda_alarm_notification[0].arn
+  protocol  = "email"
+  endpoint  = var.alarm_email_endpoint
 }
