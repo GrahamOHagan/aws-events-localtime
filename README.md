@@ -18,5 +18,6 @@ The service is a lambda triggered by events matching events:PutRule API events -
 | cloudwatch_log_retention_days | Specify cloudwatch log retention in days    | `14`                  |
 | disable_put_events            | Disable triggering by PutRule & Tag events  | `false`               |
 | tags                          | Tags for the lambda and dependant resources | `NA`                  |
+| lambda_runtime                | Lambda python runtime                       | `python3.11`          |
 
 AWS Rules follow UTC and schedule expression format is detailed [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).

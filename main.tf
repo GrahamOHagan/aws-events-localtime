@@ -7,12 +7,12 @@ resource "aws_lambda_function" "this" {
 
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
-  runtime = "python3.7"
+  runtime = var.lambda_runtime
   timeout = 300
 
   environment {
     variables = {
-      TOGGLE = var.trigger_tag
+      TOGGLE      = var.trigger_tag
       DISABLE_PUT = var.disable_put_events
     }
   }
@@ -50,8 +50,8 @@ resource "aws_iam_role" "this" {
 
 # Eventbridge event rules for Winter and Summer
 resource "aws_cloudwatch_event_rule" "summer" {
-  name = "daylight-savings-summer-event"
-  description = "Trigger localtime lambda in summer - ${var.summer_expression}"
+  name                = "daylight-savings-summer-event"
+  description         = "Trigger localtime lambda in summer - ${var.summer_expression}"
   schedule_expression = var.summer_expression
 
   tags = var.tags
@@ -63,8 +63,8 @@ resource "aws_cloudwatch_event_target" "summer" {
 }
 
 resource "aws_cloudwatch_event_rule" "winter" {
-  name = "daylight-savings-winter-event"
-  description = "Trigger localtime lambda in winter - ${var.winter_expression}"
+  name                = "daylight-savings-winter-event"
+  description         = "Trigger localtime lambda in winter - ${var.winter_expression}"
   schedule_expression = var.winter_expression
 
   tags = var.tags
@@ -77,9 +77,9 @@ resource "aws_cloudwatch_event_target" "winter" {
 
 # Eventbridge pattern rule - When a rule is updated
 resource "aws_cloudwatch_event_rule" "this" {
-  count = var.disable_put_events ? 0 : 1
-  name = "rule-creation-event"
-  description = "Trigger localtime lambda when a rule is created or updated and has the ${var.trigger_tag} tag."
+  count         = var.disable_put_events ? 0 : 1
+  name          = "rule-creation-event"
+  description   = "Trigger localtime lambda when a rule is created or updated and has the ${var.trigger_tag} tag."
   event_pattern = <<EOF
 {
   "detail-type": [
@@ -107,7 +107,7 @@ EOF
   tags = var.tags
 }
 resource "aws_cloudwatch_event_target" "this" {
-  count = var.disable_put_events ? 0 : 1
+  count     = var.disable_put_events ? 0 : 1
   rule      = aws_cloudwatch_event_rule.this[0].name
   target_id = "SendToLambda"
   arn       = aws_lambda_function.this.arn
@@ -131,7 +131,7 @@ resource "aws_lambda_permission" "allow_winter_trigger" {
 }
 
 resource "aws_lambda_permission" "allow_event_trigger" {
-  count = var.disable_put_events ? 0 : 1
+  count         = var.disable_put_events ? 0 : 1
   statement_id  = "AllowExecutionFromCWEvent"
   action        = "lambda:InvokeFunction"
   principal     = "events.amazonaws.com"
@@ -166,7 +166,7 @@ resource "aws_sns_topic" "lambda_alarm_notification" {
   count = var.alarm_email_endpoint != "" ? 1 : 0
   name  = "${local.lambda_name}-Error-Alarm"
 
-  tags  = var.tags
+  tags = var.tags
 }
 
 resource "aws_sns_topic_subscription" "email_subscription" {
