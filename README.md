@@ -1,4 +1,4 @@
-## aws-events-locatime
+## aws-events-localtime
 
 This module deploys a service that monitors and updates AWS EventBridge Rules (Cloudwatch Rules) that are configured with schedule expressions.
 
